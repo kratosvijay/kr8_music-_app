@@ -197,202 +197,117 @@ class OctetTriangulusPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double centerX = size.width / 2;
-    final double centerY = size.height / 2;
-    final double R = size.width * 0.45;
-
-    final Paint linePaint = Paint()
+    final strokePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.7)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..color = Colors.white.withValues(alpha: 0.15);
+      ..strokeWidth = 1.2;
 
-    // 1. Draw Outer boundary circle
-    canvas.drawCircle(Offset(centerX, centerY), R, linePaint);
+    final center = Offset(size.width / 2, size.height / 2);
+    final outerRadius = size.width * 0.45;
 
-    // 2. Draw Upright stabilizing triangle T1-T2-T3 (Cyan)
-    final Offset t1 = Offset(centerX + nodes[0].relativeOffset.dx * R, centerY + nodes[0].relativeOffset.dy * R);
-    final Offset t2 = Offset(centerX + nodes[1].relativeOffset.dx * R, centerY + nodes[1].relativeOffset.dy * R);
-    final Offset t3 = Offset(centerX + nodes[2].relativeOffset.dx * R, centerY + nodes[2].relativeOffset.dy * R);
-    
-    final Paint trianglePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..color = isErrorState 
-          ? Colors.redAccent.withValues(alpha: 0.4) 
-          : Kri8Colors.neonBlue.withValues(alpha: 0.35);
-    
-    final Path trianglePath = Path()
-      ..moveTo(t1.dx, t1.dy)
-      ..lineTo(t2.dx, t2.dy)
-      ..lineTo(t3.dx, t3.dy)
+    // 1. Outer circle
+    canvas.drawCircle(center, outerRadius, strokePaint);
+
+    // 2. Derive main triangle geometry
+    final side = outerRadius * 1.52;
+    final triangleHeight = sqrt(3) / 2 * side;
+
+    final top = Offset(
+      center.dx,
+      center.dy - triangleHeight / 2,
+    );
+
+    final left = Offset(
+      center.dx - side / 2,
+      center.dy + triangleHeight / 2,
+    );
+
+    final right = Offset(
+      center.dx + side / 2,
+      center.dy + triangleHeight / 2,
+    );
+
+    // 3. Draw main triangle
+    final mainTrianglePath = Path()
+      ..moveTo(top.dx, top.dy)
+      ..lineTo(left.dx, left.dy)
+      ..lineTo(right.dx, right.dy)
       ..close();
+    canvas.drawPath(mainTrianglePath, strokePaint);
 
-    final Paint triangleFillPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = isErrorState
-          ? Colors.redAccent.withValues(alpha: 0.08)
-          : Kri8Colors.neonBlue.withValues(alpha: 0.08);
-    canvas.drawPath(trianglePath, triangleFillPaint);
-    canvas.drawPath(trianglePath, trianglePaint);
+    // 4. Derive circle geometry
+    final circleRadius = outerRadius * 0.42;
 
-    // 3. Draw Downward tension apex (Hot Pink / Red)
-    final Offset d1 = Offset(centerX + nodes[3].relativeOffset.dx * R, centerY + nodes[3].relativeOffset.dy * R);
-    final Offset topL = Offset(centerX - R * 0.22, centerY - R * 0.5);
-    final Offset topR = Offset(centerX + R * 0.22, centerY - R * 0.5);
+    final topCircleCenter = Offset(
+      center.dx,
+      top.dy + circleRadius,
+    );
 
-    final Paint tensionPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..color = isErrorState
-          ? Colors.redAccent.withValues(alpha: 0.5)
-          : Colors.redAccent.withValues(alpha: 0.3);
+    final leftCircleCenter = Offset(
+      left.dx + circleRadius * 0.9,
+      left.dy - circleRadius * 0.5,
+    );
 
-    final Path tensionPath = Path()
-      ..moveTo(topL.dx, topL.dy)
-      ..lineTo(topR.dx, topR.dy)
-      ..lineTo(d1.dx, d1.dy)
+    final rightCircleCenter = Offset(
+      right.dx - circleRadius * 0.9,
+      right.dy - circleRadius * 0.5,
+    );
+
+    // 5. Draw inverted triangle
+    final invertedTriangleTopY = topCircleCenter.dy;
+    final invertedTriangleTopXDist = (invertedTriangleTopY - top.dy) / sqrt(3);
+
+    final invertedTopL = Offset(center.dx - invertedTriangleTopXDist, invertedTriangleTopY);
+    final invertedTopR = Offset(center.dx + invertedTriangleTopXDist, invertedTriangleTopY);
+    final invertedBottom = Offset(center.dx, center.dy + outerRadius);
+
+    final invertedTrianglePath = Path()
+      ..moveTo(invertedTopL.dx, invertedTopL.dy)
+      ..lineTo(invertedTopR.dx, invertedTopR.dy)
+      ..lineTo(invertedBottom.dx, invertedBottom.dy)
       ..close();
+    canvas.drawPath(invertedTrianglePath, strokePaint);
 
-    final Paint tensionFillPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = isErrorState
-          ? Colors.redAccent.withValues(alpha: 0.08)
-          : Colors.redAccent.withValues(alpha: 0.08);
-    canvas.drawPath(tensionPath, tensionFillPaint);
-    canvas.drawPath(tensionPath, tensionPaint);
+    // 6. Draw inner arcs (partial — clean sacred geometry)
 
-    // 4. Draw overlapping Figure-8 loops (Left and Right hemispheres)
-    // Right hemisphere circle (Purvanga)
-    final Offset rightLoopCenter = Offset(centerX + R * 0.32, centerY + R * 0.05);
-    final double loopRadius = R * 0.38;
+    final topRect = Rect.fromCircle(
+      center: topCircleCenter,
+      radius: circleRadius,
+    );
 
-    final Paint rightLoopFillPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = isErrorState
-          ? Colors.redAccent.withValues(alpha: 0.05)
-          : Kri8Colors.secondary.withValues(alpha: 0.08);
-    canvas.drawCircle(rightLoopCenter, loopRadius, rightLoopFillPaint);
+    canvas.drawArc(
+      topRect,
+      pi * 0.95,
+      pi * 1.1,
+      false,
+      strokePaint,
+    );
 
-    final Paint rightLoopPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..color = isErrorState 
-          ? Colors.redAccent.withValues(alpha: 0.25)
-          : Kri8Colors.secondary.withValues(alpha: 0.25);
-    canvas.drawCircle(rightLoopCenter, loopRadius, rightLoopPaint);
+    final leftRect = Rect.fromCircle(
+      center: leftCircleCenter,
+      radius: circleRadius,
+    );
 
-    // Left hemisphere circle (Uttaranga)
-    final Offset leftLoopCenter = Offset(centerX - R * 0.32, centerY + R * 0.05);
+    canvas.drawArc(
+      leftRect,
+      -pi * 0.15,
+      pi * 1.3,
+      false,
+      strokePaint,
+    );
 
-    final Paint leftLoopFillPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = isErrorState
-          ? Colors.redAccent.withValues(alpha: 0.05)
-          : Kri8Colors.gold.withValues(alpha: 0.08);
-    canvas.drawCircle(leftLoopCenter, loopRadius, leftLoopFillPaint);
+    final rightRect = Rect.fromCircle(
+      center: rightCircleCenter,
+      radius: circleRadius,
+    );
 
-    final Paint leftLoopPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..color = isErrorState
-          ? Colors.redAccent.withValues(alpha: 0.25)
-          : Kri8Colors.gold.withValues(alpha: 0.25);
-    canvas.drawCircle(leftLoopCenter, loopRadius, leftLoopPaint);
-
-    // Top loop circle
-    final Offset topLoopCenter = Offset(centerX, centerY - R * 0.32);
-
-    final Paint topLoopFillPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = isErrorState
-          ? Colors.redAccent.withValues(alpha: 0.03)
-          : Colors.white.withValues(alpha: 0.03);
-    canvas.drawCircle(topLoopCenter, loopRadius, topLoopFillPaint);
-
-    final Paint topLoopPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..color = Colors.white.withValues(alpha: 0.1);
-    canvas.drawCircle(topLoopCenter, loopRadius, topLoopPaint);
-
-    // 5. Draw the Nodes
-    for (final node in nodes) {
-      final double nodeX = centerX + node.relativeOffset.dx * R;
-      final double nodeY = centerY + node.relativeOffset.dy * R;
-      final Offset nodeOffset = Offset(nodeX, nodeY);
-      
-      final bool isHighlighted = highlightedNode == node.id;
-      final bool isActive = activeNodes.contains(node.id);
-
-      // Node base style
-      Color nodeColor = node.color;
-      double fillOpacity = 0.15;
-      double strokeWidth = 1.5;
-      double radius = 18.0;
-
-      if (isErrorState) {
-        nodeColor = Colors.redAccent;
-        fillOpacity = 0.2;
-      } else if (isHighlighted) {
-        fillOpacity = 0.85;
-        radius = 23.0; // expand/pulse
-        strokeWidth = 3.0;
-      } else if (isActive) {
-        fillOpacity = 0.45;
-        radius = 20.0;
-        strokeWidth = 2.0;
-      }
-
-      // Draw shadow/glow behind active or highlighted nodes
-      if (isHighlighted || isActive) {
-        final Paint glowPaint = Paint()
-          ..color = nodeColor.withValues(alpha: isHighlighted ? 0.4 : 0.2)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10.0);
-        canvas.drawCircle(nodeOffset, radius + 6, glowPaint);
-      }
-
-      // Draw node outer border
-      final Paint nodeStrokePaint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..color = isHighlighted 
-            ? Colors.white 
-            : (isActive ? nodeColor.withValues(alpha: 0.9) : nodeColor.withValues(alpha: 0.6));
-      canvas.drawCircle(nodeOffset, radius, nodeStrokePaint);
-
-      // Draw node fill
-      final Paint nodeFillPaint = Paint()
-        ..style = PaintingStyle.fill
-        ..color = nodeColor.withValues(alpha: fillOpacity);
-      canvas.drawCircle(nodeOffset, radius, nodeFillPaint);
-
-      // 6. Draw Node Text (Label)
-      final String text = showSwara ? node.swaraLabel : node.label;
-      final Color textColor = (isHighlighted && !isErrorState) 
-          ? Colors.black 
-          : Colors.white.withValues(alpha: (isActive || isHighlighted) ? 1.0 : 0.85);
-
-      final textSpan = TextSpan(
-        text: text,
-        style: TextStyle(
-          color: textColor,
-          fontSize: text.length > 2 ? 8.5 : 10.0,
-          fontWeight: (isActive || isHighlighted) ? FontWeight.bold : FontWeight.normal,
-        ),
-      );
-
-      final textPainter = TextPainter(
-        text: textSpan,
-        textDirection: TextDirection.ltr,
-        textAlign: TextAlign.center,
-      );
-
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(nodeX - textPainter.width / 2, nodeY - textPainter.height / 2),
-      );
-    }
+    canvas.drawArc(
+      rightRect,
+      -pi * 0.85,
+      pi * 1.3,
+      false,
+      strokePaint,
+    );
   }
 
   @override
