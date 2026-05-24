@@ -1,216 +1,229 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 
-class SacredGeometryPainter extends CustomPainter {
+/// The visual-only "Harmonic Blueprint" diagram.
+/// Wraps [HarmonicBlueprintPainter] in an AspectRatio(1) for plug-and-play use.
+class HarmonicBlueprintWidget extends StatelessWidget {
+  const HarmonicBlueprintWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: CustomPaint(
+        painter: HarmonicBlueprintPainter(),
+      ),
+    );
+  }
+}
+
+/// Draws the mathematically precise "Harmonic Blueprint" diagram.
+///
+/// Geometric construction:
+///   radius       = min(w, h) * 0.4
+///   middle ring  = radius * 0.75
+///   inner ring   = radius * 0.45
+///   triangle     = apex top, base at ±120° on outer circle
+///   petal curves = quadratic Bézier through inner-circle / horizontal-axis intersections
+class HarmonicBlueprintPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final R = size.width * 0.44 * 0.95;
+    final center = size.center(Offset.zero);
+    final double radius = min(size.width, size.height) * 0.4;
 
-    // Paints
+    // --- Derived radii ---
+    final double rMid = radius * 0.75;
+    final double rInner = radius * 0.45;
+
+    // --- Paints ---
     final linePaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.85)
+      ..color = Colors.white
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.75;
-
-    final axisPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.22)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.6;
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
 
     final erasePaint = Paint()
       ..blendMode = BlendMode.dstOut
       ..style = PaintingStyle.fill;
 
-    // === 1. START SAVE LAYER FOR TRANSPARENT MASKING ===
+    // ================================================================
+    // Save layer so we can punch transparent holes under node circles
+    // ================================================================
     canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
 
-    // === 2. DRAW ALL UNDERLAY SHAPES ===
+    // ========================
+    // Layer 1 — Concentric Rings
+    // ========================
+    canvas.drawCircle(center, radius, linePaint);   // Outer
+    canvas.drawCircle(center, rMid, linePaint);      // Middle
+    canvas.drawCircle(center, rInner, linePaint);    // Inner
 
-    // Dashed Axes
-    double curY = center.dy - R * 1.1;
-    final dash = 6.0;
-    final gap = 4.0;
-    while (curY < center.dy + R * 1.1) {
-      canvas.drawLine(Offset(center.dx, curY), Offset(center.dx, curY + dash), axisPaint);
-      curY += dash + gap;
-    }
+    // ========================
+    // Layer 2 — Core Axes
+    // ========================
+    // Vertical axis
+    canvas.drawLine(
+      Offset(center.dx, center.dy - radius),
+      Offset(center.dx, center.dy + radius),
+      linePaint,
+    );
+    // Horizontal axis
+    canvas.drawLine(
+      Offset(center.dx - radius, center.dy),
+      Offset(center.dx + radius, center.dy),
+      linePaint,
+    );
 
-    double curX = center.dx - R * 1.1;
-    while (curX < center.dx + R * 1.1) {
-      canvas.drawLine(Offset(curX, center.dy), Offset(curX + dash, center.dy), axisPaint);
-      curX += dash + gap;
-    }
+    // ========================
+    // Layer 3 — Harmonic Triangle (Isosceles)
+    // ========================
+    // Apex at 90° (top of circle in screen coords)
+    // Base corners at ±120° from the apex on the outer circle
+    //   → 90° + 120° = 210°   and   90° - 120° = -30° (= 330°)
+    // Using math-convention angles (counter-clockwise from +x):
+    //   210° → cos(210°) = -√3/2 ≈ -0.866, sin(210°) = -0.5
+    //   330° → cos(330°) =  √3/2 ≈  0.866, sin(330°) = -0.5
+    // In screen coords (y-down): offset.dy = center.dy - R*sin(θ)
 
-    // Tick Marks on axes
-    const double tick = 4.0;
-    for (double i = -R; i <= R; i += R / 4) {
-      if (i.abs() < 1.0) continue;
-      canvas.drawLine(Offset(center.dx + i, center.dy - tick), Offset(center.dx + i, center.dy + tick), axisPaint);
-      canvas.drawLine(Offset(center.dx - tick, center.dy + i), Offset(center.dx + tick, center.dy + i), axisPaint);
-    }
-
-    // Geometry parameters
-    final double R_tri = R * 0.685;
-    final double circleRadius = R * 0.36;
-
-    final topVertex = Offset(center.dx, center.dy - R_tri);
+    final topVertex = Offset(center.dx, center.dy - radius);
     final bottomLeft = Offset(
-      center.dx - R_tri * 0.92,
-      center.dy + R_tri * 0.54,
+      center.dx + radius * cos(210 * pi / 180),  // -0.866 R
+      center.dy - radius * sin(210 * pi / 180),  // +0.5 R
     );
     final bottomRight = Offset(
-      center.dx + R_tri * 0.92,
-      center.dy + R_tri * 0.54,
+      center.dx + radius * cos(330 * pi / 180),   //  0.866 R
+      center.dy - radius * sin(330 * pi / 180),   // +0.5 R
     );
+    final bottomCenter = Offset(center.dx, center.dy + radius);
 
-    // Midpoints / Custom Centers
-    final leftCircleCenter = Offset(
-      center.dx - R * 0.28,
-      center.dy + R * 0.08,
-    );
-    final rightCircleCenter = Offset(
-      center.dx + R * 0.28,
-      center.dy + R * 0.08,
-    );
-    final bottomCircleCenter = Offset(center.dx, center.dy + R_tri / 2);
-
-    final double invTopY = center.dy - R_tri * 0.58;
-    final double invTopXDist = R_tri * 0.24;
-    final invTopL = Offset(center.dx - invTopXDist, invTopY);
-    final invTopR = Offset(center.dx + invTopXDist, invTopY);
-    final invBottom = Offset(center.dx, center.dy + R_tri);
-
-    // One Main Outer Circle
-    canvas.drawCircle(center, R, linePaint);
-
-    // Central Circle (centered at origin)
-    canvas.drawCircle(center, R * 0.43, linePaint);
-
-    // Three inner circles built on triangle sides (single thin lines)
-    canvas.drawCircle(leftCircleCenter, circleRadius, linePaint);
-    canvas.drawCircle(rightCircleCenter, circleRadius, linePaint);
-    canvas.drawCircle(bottomCircleCenter, circleRadius, linePaint);
-
-    // Upright equilateral triangle
-    final mainTrianglePath = Path()
+    final trianglePath = Path()
       ..moveTo(topVertex.dx, topVertex.dy)
       ..lineTo(bottomLeft.dx, bottomLeft.dy)
       ..lineTo(bottomRight.dx, bottomRight.dy)
       ..close();
-    canvas.drawPath(mainTrianglePath, linePaint);
+    canvas.drawPath(trianglePath, linePaint);
 
-    // Inverted narrow triangle
-    final invertedTrianglePath = Path()
-      ..moveTo(invTopL.dx, invTopL.dy)
-      ..lineTo(invTopR.dx, invTopR.dy)
-      ..lineTo(invBottom.dx, invBottom.dy)
-      ..close();
-    canvas.drawPath(invertedTrianglePath, linePaint);
+    // ========================
+    // Layer 4 — Inner "Lens" / Petal Curves
+    // ========================
+    // Two symmetrical quadratic Bézier arcs forming a vertical eye.
+    //   Start : top of middle circle    (center.dx, center.dy - rMid)
+    //   End   : bottom of middle circle (center.dx, center.dy + rMid)
+    //   Pass-through: inner circle ∩ horizontal axis  (center.dx ± rInner, center.dy)
+    //
+    // For a quad-Bézier B(t) with endpoints P0, P2 and control P1:
+    //   B(0.5) = 0.25*P0 + 0.5*P1 + 0.25*P2
+    // Setting B(0.5).x = center.dx - rInner:
+    //   0.25*cx + 0.5*P1x + 0.25*cx = cx - rInner
+    //   P1x = cx - 2*rInner
+    //
+    // So control.x = center.dx ± 2*rInner
+    final leftPetalPath = Path()
+      ..moveTo(center.dx, center.dy - rMid)
+      ..quadraticBezierTo(
+        center.dx - 2 * rInner, center.dy,
+        center.dx, center.dy + rMid,
+      );
+    canvas.drawPath(leftPetalPath, linePaint);
 
-    // Bottom wide triangle connecting G, Gb/F#, E#
-    final bottomTrianglePath = Path()
-      ..moveTo(bottomLeft.dx, bottomLeft.dy)
-      ..lineTo(invBottom.dx, invBottom.dy)
-      ..lineTo(bottomRight.dx, bottomRight.dy)
-      ..close();
-    canvas.drawPath(bottomTrianglePath, linePaint);
+    final rightPetalPath = Path()
+      ..moveTo(center.dx, center.dy - rMid)
+      ..quadraticBezierTo(
+        center.dx + 2 * rInner, center.dy,
+        center.dx, center.dy + rMid,
+      );
+    canvas.drawPath(rightPetalPath, linePaint);
 
-    // Horizontal tick/minus mark inside top lens
-    canvas.drawLine(
-      Offset(center.dx - R * 0.04, center.dy - R_tri * 0.62),
-      Offset(center.dx + R * 0.04, center.dy - R_tri * 0.62),
-      linePaint,
-    );
+    // ========================
+    // Erase geometry under node circles
+    // ========================
+    final double nodeR = radius * 0.08;
+    canvas.drawCircle(topVertex, nodeR, erasePaint);
+    canvas.drawCircle(bottomLeft, nodeR, erasePaint);
+    canvas.drawCircle(bottomRight, nodeR, erasePaint);
+    canvas.drawCircle(bottomCenter, nodeR, erasePaint);
 
-    // === 3. ERASE PORTIONS UNDER NODES (cookie-cutter transparent masking) ===
-    final topNodeRadius = R * 0.095;
-    final nodeRadius = R * 0.076;
-    canvas.drawCircle(topVertex, topNodeRadius, erasePaint);
-    canvas.drawCircle(bottomLeft, nodeRadius, erasePaint);
-    canvas.drawCircle(bottomRight, nodeRadius, erasePaint);
-    canvas.drawCircle(invBottom, nodeRadius, erasePaint);
-
-    // === 4. RESTORE LAYER TO FINALIZE TRANSPARENT HOLES ===
+    // Restore the compositing layer
     canvas.restore();
 
-    // === 5. DRAW NODE STROKES & LABELS ON TOP ===
-    canvas.drawCircle(topVertex, topNodeRadius, linePaint);
-    canvas.drawCircle(bottomLeft, nodeRadius, linePaint);
-    canvas.drawCircle(bottomRight, nodeRadius, linePaint);
-    canvas.drawCircle(invBottom, nodeRadius, linePaint);
+    // ========================
+    // Layer 5 — Node circles (stroked on top)
+    // ========================
+    canvas.drawCircle(topVertex, nodeR, linePaint);
+    canvas.drawCircle(bottomLeft, nodeR, linePaint);
+    canvas.drawCircle(bottomRight, nodeR, linePaint);
+    canvas.drawCircle(bottomCenter, nodeR, linePaint);
 
-    // Note labels inside vertex circles (tightly placed within nodes)
-    _drawText(canvas, "C", Offset(topVertex.dx, topVertex.dy - 10), alignCenter: true, fontWeight: FontWeight.bold);
-    _drawText(canvas, "B#", Offset(topVertex.dx - 12, topVertex.dy + 8), alignCenter: true, fontSize: 8);
-    _drawText(canvas, "DO", Offset(topVertex.dx + 12, topVertex.dy + 8), alignCenter: true, fontSize: 8);
+    // ========================
+    // Layer 6 — Labels
+    // ========================
+    final double fs = radius * 0.1;   // main label size
+    final double sm = fs * 0.72;      // small / secondary label size
 
-    _drawText(canvas, "G", bottomLeft, alignCenter: true, fontWeight: FontWeight.bold);
+    // --- 4 vertex labels ---
+    _label(canvas, 'C', topVertex.translate(0, -fs * 0.45), fs, bold: true);
+    _label(canvas, 'B#', topVertex.translate(-nodeR * 0.75, fs * 0.32), sm);
+    _label(canvas, 'DO', topVertex.translate(nodeR * 0.75, fs * 0.32), sm);
 
-    _drawText(canvas, "E#", Offset(bottomRight.dx + 12, bottomRight.dy + 8), alignCenter: true, fontSize: 8);
-    _drawText(canvas, "F", Offset(bottomRight.dx - 12, bottomRight.dy + 8), alignCenter: true, fontSize: 8);
+    _label(canvas, 'G', bottomLeft, fs, bold: true);
 
-    _drawText(canvas, "Gb/F#", invBottom, alignCenter: true, fontWeight: FontWeight.bold);
+    _label(canvas, 'F', bottomRight.translate(-nodeR * 0.6, fs * 0.28), fs, bold: true);
+    _label(canvas, 'E#', bottomRight.translate(nodeR * 0.6, fs * 0.28), sm);
 
-    // Outer solfege indicators
-    _drawText(canvas, "TI", Offset(center.dx - R * 0.65, center.dy - R * 0.65), alignCenter: true);
-    _drawText(canvas, "RF", Offset(center.dx + R * 0.65, center.dy - R * 0.65), alignCenter: true);
-    _drawText(canvas, "LA", Offset(center.dx - R * 0.75, center.dy + R * 0.65), alignCenter: true);
-    _drawText(canvas, "MI", Offset(center.dx + R * 0.75, center.dy + R * 0.65), alignCenter: true);
-    _drawText(canvas, "SOL", Offset(center.dx - R * 0.35, center.dy + R * 0.65), alignCenter: true);
-    _drawText(canvas, "FA", Offset(center.dx + R * 0.35, center.dy + R * 0.65), alignCenter: true);
+    _label(canvas, 'Gb/F#', bottomCenter, fs, bold: true);
 
-    // Inside top circle notes (Bb, C#, A*, D) - C, B#, DO are handled inside topVertex C circle above
-    _drawText(canvas, "Bb", Offset(center.dx - 16, center.dy - R_tri * 0.44), alignCenter: true);
-    _drawText(canvas, "C#", Offset(center.dx + 16, center.dy - R_tri * 0.44), alignCenter: true);
-    _drawText(canvas, "A*", Offset(center.dx - 16, center.dy - R_tri * 0.28), alignCenter: true);
-    _drawText(canvas, "D", Offset(center.dx + 16, center.dy - R_tri * 0.28), alignCenter: true);
+    // --- Outer-ring solfège (between outer & middle circles) ---
+    _label(canvas, 'TI', Offset(center.dx - radius * 0.62, center.dy - radius * 0.62), fs);
+    _label(canvas, 'RE', Offset(center.dx + radius * 0.62, center.dy - radius * 0.62), fs);
+    _label(canvas, 'LA', Offset(center.dx - radius * 0.72, center.dy + radius * 0.62), fs);
+    _label(canvas, 'Mi', Offset(center.dx + radius * 0.72, center.dy + radius * 0.62), fs);
+    _label(canvas, 'SOL', Offset(center.dx - radius * 0.32, center.dy + radius * 0.62), fs);
+    _label(canvas, 'FA', Offset(center.dx + radius * 0.32, center.dy + radius * 0.62), fs);
 
-    // Left circle notes
-    _drawText(canvas, "Cb", Offset(center.dx - R_tri * 0.54, center.dy - R_tri * 0.44), alignCenter: true);
-    _drawText(canvas, "B", Offset(center.dx - R_tri * 0.54, center.dy - R_tri * 0.34), alignCenter: true);
-    _drawText(canvas, "A", Offset(center.dx - R_tri * 0.65, center.dy + R_tri * 0.08), alignCenter: true);
-    _drawText(canvas, "Ab", Offset(center.dx - R_tri * 0.38, center.dy + R_tri * 0.18), alignCenter: true);
-    _drawText(canvas, "G#", Offset(center.dx - R_tri * 0.38, center.dy + R_tri * 0.28), alignCenter: true);
+    // --- Inner petal / between-circle chromatic labels ---
+    // Upper inner pair
+    _label(canvas, 'Bb', Offset(center.dx - rInner * 0.42, center.dy - rMid * 0.42), sm);
+    _label(canvas, 'C#', Offset(center.dx + rInner * 0.42, center.dy - rMid * 0.42), sm);
+    _label(canvas, 'A#', Offset(center.dx - rInner * 0.42, center.dy - rMid * 0.22), sm);
+    _label(canvas, 'Db', Offset(center.dx + rInner * 0.42, center.dy - rMid * 0.22), sm);
 
-    // Right circle notes
-    _drawText(canvas, "D+", Offset(center.dx + R_tri * 0.58, center.dy - R_tri * 0.38), alignCenter: true);
-    _drawText(canvas, "D#", Offset(center.dx + R_tri * 0.38, center.dy + R_tri * 0.18), alignCenter: true);
-    _drawText(canvas, "Eb", Offset(center.dx + R_tri * 0.38, center.dy + R_tri * 0.28), alignCenter: true);
-    _drawText(canvas, "E", Offset(center.dx + R_tri * 0.56, center.dy + R_tri * 0.34), alignCenter: true);
-    _drawText(canvas, "Fb", Offset(center.dx + R_tri * 0.56, center.dy + R_tri * 0.44), alignCenter: true);
+    // Left region
+    _label(canvas, 'Cb', Offset(center.dx - rMid * 0.58, center.dy - rMid * 0.38), sm);
+    _label(canvas, 'B', Offset(center.dx - rMid * 0.58, center.dy - rMid * 0.22), sm);
+    _label(canvas, 'A', Offset(center.dx - rMid * 0.68, center.dy + rMid * 0.06), sm);
+    _label(canvas, 'Ab', Offset(center.dx - rMid * 0.42, center.dy + rMid * 0.16), sm);
+    _label(canvas, 'G#', Offset(center.dx - rMid * 0.42, center.dy + rMid * 0.30), sm);
+
+    // Right region
+    _label(canvas, 'D', Offset(center.dx + rMid * 0.60, center.dy - rMid * 0.32), sm);
+    _label(canvas, 'D#', Offset(center.dx + rMid * 0.42, center.dy + rMid * 0.16), sm);
+    _label(canvas, 'Eb', Offset(center.dx + rMid * 0.42, center.dy + rMid * 0.30), sm);
+    _label(canvas, 'E', Offset(center.dx + rMid * 0.60, center.dy + rMid * 0.30), sm);
+    _label(canvas, 'Fb', Offset(center.dx + rMid * 0.60, center.dy + rMid * 0.44), sm);
   }
 
-  void _drawText(
+  /// Draws a centered white text label at [pos].
+  void _label(
     Canvas canvas,
     String text,
-    Offset position, {
-    double fontSize = 9.5,
-    FontWeight fontWeight = FontWeight.normal,
-    bool alignCenter = false,
+    Offset pos,
+    double fontSize, {
+    bool bold = false,
   }) {
-    final textSpan = TextSpan(
+    final span = TextSpan(
       text: text,
       style: TextStyle(
-        color: Colors.black.withValues(alpha: 0.85),
+        color: Colors.white.withValues(alpha: 0.95),
         fontSize: fontSize,
-        fontWeight: fontWeight,
-        fontFamily: 'monospace',
+        fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+        fontFamily: 'Helvetica',
       ),
     );
-    final textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    
-    final paintOffset = alignCenter
-        ? Offset(position.dx - textPainter.width / 2, position.dy - textPainter.height / 2)
-        : position;
-    textPainter.paint(canvas, paintOffset);
+    final tp = TextPainter(text: span, textDirection: TextDirection.ltr)
+      ..layout();
+    tp.paint(canvas, Offset(pos.dx - tp.width / 2, pos.dy - tp.height / 2));
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

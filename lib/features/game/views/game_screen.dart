@@ -74,9 +74,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                             const Color(0xFF0F0E17),
                           ]
                         : [
-                            const Color(0xFF0A0A0E),
-                            const Color(0xFF12111A),
-                            const Color(0xFF0F0E17),
+                            const Color(0xFF000000),
+                            const Color(0xFF000000),
                           ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,

@@ -2,29 +2,39 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/game_controller.dart';
-import '../../../core/theme/app_theme.dart';
 
-class NodePosition {
+/// Each note's tap zone definition: ID, label, position (fraction of image),
+/// hit radius fraction, and its unique constant glow color.
+class NoteZone {
   final String id;
   final String label;
   final String swaraLabel;
-  final Offset relativeOffset; // normalized offset from center (-1.0 to 1.0)
+  final double fx; // fractional x (0.0–1.0) of the image
+  final double fy; // fractional y (0.0–1.0) of the image
+  final double hitRadius; // fraction of image size for the tap zone
   final Color color;
 
-  const NodePosition({
+  const NoteZone({
     required this.id,
     required this.label,
     required this.swaraLabel,
-    required this.relativeOffset,
+    required this.fx,
+    required this.fy,
+    this.hitRadius = 0.06,
     required this.color,
   });
 }
 
+/// Interactive Harmonic Blueprint widget.
+///
+/// Uses the actual blueprint image as the visual layer, with invisible
+/// circular tap zones overlaid at each note position. When tapped,
+/// a radial glow of the note's unique color illuminates that area.
 class OctetTriangulusWidget extends StatelessWidget {
   final double size;
   final GameController controller = Get.find<GameController>();
-  final List<String> activeNodes; // List of node IDs to highlight (e.g. scales or active chords)
-  final bool showSwara; // Toggle between Western note names and Carnatic swaras
+  final List<String> activeNodes;
+  final bool showSwara;
 
   OctetTriangulusWidget({
     super.key,
@@ -33,376 +43,210 @@ class OctetTriangulusWidget extends StatelessWidget {
     this.showSwara = false,
   });
 
-  // Coordinates for the 12 nodes based on the mathematical layout of the blueprint
-  static final List<NodePosition> nodes = [
-    const NodePosition(
-      id: 'T1',
-      label: 'C',
-      swaraLabel: 'S',
-      relativeOffset: Offset(0.0, -0.685), // Top vertex small circle (R_tri = 0.685)
-      color: Kri8Colors.neonBlue,
+  // 12 chromatic note zones — positions calibrated to the reference image
+  // Colors: Scriabin-inspired chromatic color wheel (constant per note)
+  static const List<NoteZone> noteZones = [
+    // === Triangle vertices (on outer circle) ===
+    NoteZone(
+      id: 'T1', label: 'C', swaraLabel: 'S',
+      fx: 0.50, fy: 0.055,
+      hitRadius: 0.055,
+      color: Color(0xFFFF3B30), // Red
     ),
-    const NodePosition(
-      id: 'O1',
-      label: 'Db',
-      swaraLabel: 'R1',
-      relativeOffset: Offset(0.168, -0.336),
-      color: Kri8Colors.secondary,
+    NoteZone(
+      id: 'T2', label: 'F', swaraLabel: 'M1',
+      fx: 0.745, fy: 0.77,
+      hitRadius: 0.055,
+      color: Color(0xFF34C759), // Green
     ),
-    const NodePosition(
-      id: 'O2',
-      label: 'D',
-      swaraLabel: 'R2/G1',
-      relativeOffset: Offset(0.168, -0.214),
-      color: Kri8Colors.secondary,
+    NoteZone(
+      id: 'T3', label: 'G', swaraLabel: 'P',
+      fx: 0.255, fy: 0.77,
+      hitRadius: 0.055,
+      color: Color(0xFF007AFF), // Blue
     ),
-    const NodePosition(
-      id: 'O3',
-      label: 'Eb',
-      swaraLabel: 'R3/G2',
-      relativeOffset: Offset(0.290, 0.214),
-      color: Kri8Colors.secondary,
+    // === Bottom center (Gb/F#) ===
+    NoteZone(
+      id: 'D1', label: 'F#', swaraLabel: 'M2',
+      fx: 0.50, fy: 0.88,
+      hitRadius: 0.055,
+      color: Color(0xFF30D5C8), // Teal
     ),
-    const NodePosition(
-      id: 'O4',
-      label: 'E',
-      swaraLabel: 'G3',
-      relativeOffset: Offset(0.427, 0.259),
-      color: Kri8Colors.secondary,
+    // === Inner notes — left side ===
+    NoteZone(
+      id: 'O7', label: 'Bb', swaraLabel: 'D3/N2',
+      fx: 0.395, fy: 0.31,
+      hitRadius: 0.048,
+      color: Color(0xFFAF52DE), // Purple
     ),
-    const NodePosition(
-      id: 'T2',
-      label: 'F',
-      swaraLabel: 'M1',
-      relativeOffset: Offset(0.63, 0.37), // Bottom-right vertex small circle (manually balanced)
-      color: Kri8Colors.neonBlue,
+    NoteZone(
+      id: 'O8', label: 'B', swaraLabel: 'N3',
+      fx: 0.275, fy: 0.305,
+      hitRadius: 0.048,
+      color: Color(0xFFFF2D78), // Pink
     ),
-    const NodePosition(
-      id: 'D1',
-      label: 'F#',
-      swaraLabel: 'M2',
-      relativeOffset: Offset(0.0, 0.685), // Bottom center small circle (Gb/F#)
-      color: Colors.redAccent,
+    NoteZone(
+      id: 'O6', label: 'A', swaraLabel: 'D2/N1',
+      fx: 0.24, fy: 0.465,
+      hitRadius: 0.048,
+      color: Color(0xFF5856D6), // Indigo
     ),
-    const NodePosition(
-      id: 'T3',
-      label: 'G',
-      swaraLabel: 'P',
-      relativeOffset: Offset(-0.63, 0.37), // Bottom-left vertex small circle (manually balanced)
-      color: Kri8Colors.neonBlue,
+    NoteZone(
+      id: 'O5', label: 'Ab', swaraLabel: 'D1',
+      fx: 0.37, fy: 0.445,
+      hitRadius: 0.048,
+      color: Color(0xFF5AC8FA), // Light Blue
     ),
-    const NodePosition(
-      id: 'O5',
-      label: 'Ab',
-      swaraLabel: 'D1',
-      relativeOffset: Offset(-0.290, 0.214),
-      color: Kri8Colors.gold,
+    // === Inner notes — right side ===
+    NoteZone(
+      id: 'O1', label: 'Db', swaraLabel: 'R1',
+      fx: 0.585, fy: 0.31,
+      hitRadius: 0.048,
+      color: Color(0xFFFF6B35), // Orange-Red
     ),
-    const NodePosition(
-      id: 'O6',
-      label: 'A',
-      swaraLabel: 'D2/N1',
-      relativeOffset: Offset(-0.496, 0.061),
-      color: Kri8Colors.gold,
+    NoteZone(
+      id: 'O2', label: 'D', swaraLabel: 'R2/G1',
+      fx: 0.74, fy: 0.305,
+      hitRadius: 0.048,
+      color: Color(0xFFFF9500), // Orange
     ),
-    const NodePosition(
-      id: 'O7',
-      label: 'Bb',
-      swaraLabel: 'D3/N2',
-      relativeOffset: Offset(-0.214, -0.336),
-      color: Kri8Colors.gold,
+    NoteZone(
+      id: 'O3', label: 'Eb', swaraLabel: 'R3/G2',
+      fx: 0.615, fy: 0.445,
+      hitRadius: 0.048,
+      color: Color(0xFFFFCC00), // Gold
     ),
-    const NodePosition(
-      id: 'O8',
-      label: 'B',
-      swaraLabel: 'N3',
-      relativeOffset: Offset(-0.442, -0.259),
-      color: Kri8Colors.gold,
+    NoteZone(
+      id: 'O4', label: 'E', swaraLabel: 'G3',
+      fx: 0.725, fy: 0.555,
+      hitRadius: 0.048,
+      color: Color(0xFFA8E600), // Yellow-Green
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (details) {
-          final localPos = details.localPosition;
-          
-          final double centerX = size / 2;
-          final double centerY = size / 2;
-          final double R = size * 0.44 * 0.95; // layout radius scaled down by 5%
-
-          // Find the closest node to the tapped coordinate
-          NodePosition? closestNode;
-          double minDistance = double.infinity;
-
-          for (final node in nodes) {
-            final double nodeX = centerX + node.relativeOffset.dx * R;
-            final double nodeY = centerY + node.relativeOffset.dy * R;
-            
-            final double distance = sqrt(pow(localPos.dx - nodeX, 2) + pow(localPos.dy - nodeY, 2));
-            if (distance < minDistance) {
-              minDistance = distance;
-              closestNode = node;
-            }
-          }
-
-          final double hitRadius = R * 0.22; // tap hit zone radius
-          if (closestNode != null && minDistance < hitRadius) {
-            controller.playNode(closestNode.id);
-          }
-        },
+      child: SizedBox(
+        width: size,
+        height: size,
         child: Obx(() {
           final highlighted = controller.highlightedNode.value;
           final isError = controller.hasError.value;
-          
-          return CustomPaint(
-            size: Size(size, size),
-            painter: OctetTriangulusPainter(
-              nodes: nodes,
-              activeNodes: activeNodes,
-              highlightedNode: highlighted,
-              showSwara: showSwara,
-              isErrorState: isError,
+
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (details) {
+              _handleTap(details.localPosition);
+            },
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Layer 1: The actual blueprint image (visual only)
+                Image.asset(
+                  'assets/images/harmonic_blueprint.png',
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                ),
+
+                // Layer 2: Glow overlays for active/highlighted notes
+                ...noteZones.map((zone) {
+                  final bool isHighlighted = highlighted == zone.id;
+                  final bool isActive = activeNodes.contains(zone.id);
+
+                  if (!isHighlighted && !isActive) {
+                    return const SizedBox.shrink();
+                  }
+
+                  final Color glowColor = isError
+                      ? Colors.redAccent
+                      : (isHighlighted ? zone.color : zone.color.withValues(alpha: 0.6));
+
+                  return Positioned(
+                    left: (zone.fx - zone.hitRadius) * size,
+                    top: (zone.fy - zone.hitRadius) * size,
+                    width: zone.hitRadius * 2 * size,
+                    height: zone.hitRadius * 2 * size,
+                    child: IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              glowColor.withValues(alpha: isHighlighted ? 0.7 : 0.4),
+                              glowColor.withValues(alpha: isHighlighted ? 0.35 : 0.15),
+                              glowColor.withValues(alpha: 0.0),
+                            ],
+                            stops: const [0.0, 0.5, 1.0],
+                          ),
+                          boxShadow: isHighlighted
+                              ? [
+                                  BoxShadow(
+                                    color: glowColor.withValues(alpha: 0.6),
+                                    blurRadius: zone.hitRadius * size * 0.8,
+                                    spreadRadius: zone.hitRadius * size * 0.15,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+
+                // Layer 3: Swara labels overlay (only if showSwara is on)
+                if (showSwara)
+                  ...noteZones.map((zone) {
+                    return Positioned(
+                      left: zone.fx * size - 16,
+                      top: zone.fy * size - 8,
+                      child: IgnorePointer(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            zone.swaraLabel,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Helvetica',
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+              ],
             ),
           );
         }),
       ),
     );
   }
-}
 
-class OctetTriangulusPainter extends CustomPainter {
-  final List<NodePosition> nodes;
-  final List<String> activeNodes;
-  final String highlightedNode;
-  final bool showSwara;
-  final bool isErrorState;
+  void _handleTap(Offset localPos) {
+    NoteZone? closestZone;
+    double minDistance = double.infinity;
 
-  OctetTriangulusPainter({
-    required this.nodes,
-    required this.activeNodes,
-    required this.highlightedNode,
-    required this.showSwara,
-    required this.isErrorState,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final R = size.width * 0.44 * 0.95;
-
-    // Paints (white lines for dark background, transparent canvas)
-    final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.8)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.75;
-
-    final axisPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.22)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.6;
-
-    final erasePaint = Paint()
-      ..blendMode = BlendMode.dstOut
-      ..style = PaintingStyle.fill;
-
-    // === 1. START SAVE LAYER FOR TRANSPARENT MASKING ===
-    canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
-
-    // === 2. DRAW ALL UNDERLAY SHAPES ===
-
-    // Vertical dashed centerline
-    double curY = -R * 1.1;
-    final dash = 6.0;
-    final gap = 4.0;
-    while (curY < R * 1.1) {
-      canvas.drawLine(
-        Offset(center.dx, center.dy + curY),
-        Offset(center.dx, center.dy + curY + dash),
-        axisPaint,
-      );
-      curY += dash + gap;
-    }
-
-    // Horizontal dashed centerline
-    double curX = -R * 1.1;
-    while (curX < R * 1.1) {
-      canvas.drawLine(
-        Offset(center.dx + curX, center.dy),
-        Offset(center.dx + curX + dash, center.dy),
-        axisPaint,
-      );
-      curX += dash + gap;
-    }
-
-    // Tick marks on axes
-    const tickLen = 4.0;
-    for (double i = -R; i <= R; i += R / 4) {
-      if (i.abs() < 1.0) continue;
-      canvas.drawLine(
-        Offset(center.dx + i, center.dy - tickLen),
-        Offset(center.dx + i, center.dy + tickLen),
-        axisPaint,
-      );
-      canvas.drawLine(
-        Offset(center.dx - tickLen, center.dy + i),
-        Offset(center.dx + tickLen, center.dy + i),
-        axisPaint,
-      );
-    }
-
-    // Geometry parameters
-    final double R_tri = R * 0.685;
-    final double circleRadius = R * 0.36;
-
-    final topVertex = Offset(center.dx, center.dy - R_tri);
-    final bottomLeft = Offset(
-      center.dx - R_tri * 0.92,
-      center.dy + R_tri * 0.54,
-    );
-    final bottomRight = Offset(
-      center.dx + R_tri * 0.92,
-      center.dy + R_tri * 0.54,
-    );
-
-    // Midpoints / Custom Centers
-    final leftCircleCenter = Offset(
-      center.dx - R * 0.28,
-      center.dy + R * 0.08,
-    );
-    final rightCircleCenter = Offset(
-      center.dx + R * 0.28,
-      center.dy + R * 0.08,
-    );
-    final bottomCircleCenter = Offset(center.dx, center.dy + R_tri / 2);
-
-    final double invTopY = center.dy - R_tri * 0.58;
-    final double invTopXDist = R_tri * 0.24;
-    final invTopL = Offset(center.dx - invTopXDist, invTopY);
-    final invTopR = Offset(center.dx + invTopXDist, invTopY);
-    final invBottom = Offset(center.dx, center.dy + R_tri);
-
-    // Paths
-    final mainTrianglePath = Path()
-      ..moveTo(topVertex.dx, topVertex.dy)
-      ..lineTo(bottomLeft.dx, bottomLeft.dy)
-      ..lineTo(bottomRight.dx, bottomRight.dy)
-      ..close();
-
-    final invertedTrianglePath = Path()
-      ..moveTo(invTopL.dx, invTopL.dy)
-      ..lineTo(invTopR.dx, invTopR.dy)
-      ..lineTo(invBottom.dx, invBottom.dy)
-      ..close();
-
-    // Bottom flat triangle
-    final bottomTrianglePath = Path()
-      ..moveTo(bottomLeft.dx, bottomLeft.dy)
-      ..lineTo(invBottom.dx, invBottom.dy)
-      ..lineTo(bottomRight.dx, bottomRight.dy)
-      ..close();
-
-    // One Main Outer Circle
-    canvas.drawCircle(center, R, linePaint);
-
-    // Central Circle (centered at origin)
-    canvas.drawCircle(center, R * 0.43, linePaint);
-
-    // Three inner circles built on triangle sides (single thin lines)
-    canvas.drawCircle(leftCircleCenter, circleRadius, linePaint);
-    canvas.drawCircle(rightCircleCenter, circleRadius, linePaint);
-    canvas.drawCircle(bottomCircleCenter, circleRadius, linePaint);
-
-    // Main upright triangle
-    canvas.drawPath(mainTrianglePath, linePaint);
-
-    // Inverted triangle
-    canvas.drawPath(invertedTrianglePath, linePaint);
-
-    // Bottom flat triangle
-    canvas.drawPath(bottomTrianglePath, linePaint);
-
-    // Horizontal tick/minus mark inside top lens
-    canvas.drawLine(
-      Offset(center.dx - R * 0.04, center.dy - R_tri * 0.62),
-      Offset(center.dx + R * 0.04, center.dy - R_tri * 0.62),
-      linePaint,
-    );
-
-    // === 3. ERASE PORTIONS UNDER NODES (cookie-cutter transparent masking) ===
-    final topNodeRadius = R * 0.095;
-    final nodeRadius = R * 0.076;
-    canvas.drawCircle(topVertex, topNodeRadius, erasePaint);
-    canvas.drawCircle(bottomLeft, nodeRadius, erasePaint);
-    canvas.drawCircle(bottomRight, nodeRadius, erasePaint);
-    canvas.drawCircle(invBottom, nodeRadius, erasePaint);
-
-    // === 4. RESTORE LAYER TO FINALIZE TRANSPARENT HOLES ===
-    canvas.restore();
-
-    // === 5. DRAW NODE STROKES ON TOP ===
-    canvas.drawCircle(topVertex, topNodeRadius, linePaint);
-    canvas.drawCircle(bottomLeft, nodeRadius, linePaint);
-    canvas.drawCircle(bottomRight, nodeRadius, linePaint);
-    canvas.drawCircle(invBottom, nodeRadius, linePaint);
-
-    // Draw the 12 chromatic note labels & active highlights
-    for (final node in nodes) {
-      final double nodeX = center.dx + node.relativeOffset.dx * R;
-      final double nodeY = center.dy + node.relativeOffset.dy * R;
-      final Offset nodeOffset = Offset(nodeX, nodeY);
-
-      final bool isHighlighted = highlightedNode == node.id;
-      final bool isActive = activeNodes.contains(node.id);
-
-      Color highlightColor = isErrorState
-          ? Colors.redAccent
-          : (isHighlighted ? const Color(0xFF00FF7F) : const Color(0xFFFFD700));
-
-      final double currentRadius = (node.id == 'T1' ? topNodeRadius : nodeRadius);
-
-      if (isHighlighted || isActive) {
-        final Paint activePaint = Paint()
-          ..color = highlightColor
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = isHighlighted ? 2.0 : 1.2;
-        canvas.drawCircle(nodeOffset, currentRadius * 1.25, activePaint);
+    for (final zone in noteZones) {
+      final double zoneX = zone.fx * size;
+      final double zoneY = zone.fy * size;
+      final double distance =
+          sqrt(pow(localPos.dx - zoneX, 2) + pow(localPos.dy - zoneY, 2));
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestZone = zone;
       }
-
-      // Draw text label
-      final String text = showSwara ? node.swaraLabel : node.label;
-      final Color textColor = isHighlighted
-          ? highlightColor
-          : (isActive ? const Color(0xFFFFD700) : Colors.white.withValues(alpha: 0.9));
-
-      final textSpan = TextSpan(
-        text: text,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 9,
-          fontWeight: (isHighlighted || isActive) ? FontWeight.bold : FontWeight.w500,
-          fontFamily: 'monospace',
-        ),
-      );
-      final textPainter = TextPainter(
-        text: textSpan,
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(nodeX - textPainter.width / 2, nodeY - textPainter.height / 2),
-      );
     }
-  }
 
-  @override
-  bool shouldRepaint(covariant OctetTriangulusPainter oldDelegate) {
-    return oldDelegate.highlightedNode != highlightedNode ||
-        oldDelegate.activeNodes != activeNodes ||
-        oldDelegate.showSwara != showSwara ||
-        oldDelegate.isErrorState != isErrorState;
+    final double hitThreshold =
+        (closestZone?.hitRadius ?? 0.06) * size * 1.5; // generous tap zone
+    if (closestZone != null && minDistance < hitThreshold) {
+      controller.playNode(closestZone.id);
+    }
   }
 }
