@@ -71295,7 +71295,7 @@ r=s/2
 q=b.b/2
 p=s*0.45
 a.dm(new A.p(r,q),p,d)
-o=p*1.73
+o=p*1.52
 s=Math.sqrt(3)/2*o/2
 n=q-s
 m=o/2
@@ -71309,7 +71309,7 @@ k.aF(new A.cJ(l,s))
 k.aF(new A.cJ(m,s))
 k.aF(new A.mu())
 a.fA(k,d)
-j=o*0.32
+j=p*0.42
 i=n+j
 h=j*0.9
 s-=j*0.5
@@ -71320,9 +71320,9 @@ f.aF(new A.cJ(r+g,i))
 f.aF(new A.cJ(r,q+p))
 f.aF(new A.mu())
 a.fA(f,d)
-a.Cw(A.iI(new A.p(r,i),j),0.3141592653589793,2.5132741228718345,!1,d)
-a.Cw(A.iI(new A.p(l+h,s),j),2.356194490192345,4.71238898038469,!1,d)
-a.Cw(A.iI(new A.p(m-h,s),j),-0.7853981633974483,4.71238898038469,!1,d)},
+a.Cw(A.iI(new A.p(r,i),j),2.9845130209103035,3.455751918948773,!1,d)
+a.Cw(A.iI(new A.p(l+h,s),j),-0.47123889803846897,4.084070449666731,!1,d)
+a.Cw(A.iI(new A.p(m-h,s),j),-2.670353755551324,4.084070449666731,!1,d)},
 iq(a){return!1}}
 A.xr.prototype={
 on(){this.Gb()
