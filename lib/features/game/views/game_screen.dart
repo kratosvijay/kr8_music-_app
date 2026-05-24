@@ -54,7 +54,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     final double screenHeight = MediaQuery.of(context).size.height;
     // Keep canvas size responsive and constrained on wider desktop viewports
     final double constrainedWidth = min(screenWidth, 800);
-    final double canvasSize = min(constrainedWidth * 0.85, screenHeight * 0.45);
+    final double canvasSize = min(constrainedWidth * 0.85, screenHeight * 0.38);
 
     return Scaffold(
       body: Stack(
