@@ -137,29 +137,31 @@ class LevelSelectionScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ShaderMask(
-              shaderCallback: (bounds) => Kri8Colors.blueGradient.createShader(bounds),
-              child: Text(
-                'OCTET TRIANGULUS',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 3,
-                      color: Colors.white,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ShaderMask(
+                shaderCallback: (bounds) => Kri8Colors.blueGradient.createShader(bounds),
+                child: Text(
+                  'OCTET TRIANGULUS',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 3,
+                        color: Colors.white,
+                      ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Music Intelligence',
+                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
                     ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Music Intelligence',
-              style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ],
+            ],
+          ),
         ),
         Row(
           children: [
