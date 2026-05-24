@@ -1,14 +1,37 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:audio_session/audio_session.dart';
 
 class AudioSynthService {
   static final AudioSynthService _instance = AudioSynthService._internal();
   factory AudioSynthService() => _instance;
-  AudioSynthService._internal();
+  AudioSynthService._internal() {
+    _initAudioSession();
+  }
 
   final AudioPlayer _player = AudioPlayer();
   final AudioPlayer _errorPlayer = AudioPlayer();
+
+  Future<void> _initAudioSession() async {
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(const AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.playback,
+        avAudioSessionCategoryOptions: AVAudioSessionCategoryOptions.mixWithOthers,
+        avAudioSessionMode: AVAudioSessionMode.defaultMode,
+        avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
+        avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
+        androidAudioAttributes: AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.music,
+          flags: AndroidAudioFlags.none,
+          usage: AndroidAudioUsage.media,
+        ),
+      ));
+    } catch (e) {
+      debugPrint('Error configuring audio session: $e');
+    }
+  }
 
   void dispose() {
     _player.dispose();
@@ -35,7 +58,7 @@ class AudioSynthService {
   static const double errorFrequency = 130.81; // Low C3 for buzzer
 
   Uint8List generateWavBytes(double frequency, double durationSeconds, {bool isError = false}) {
-    const int sampleRate = 22050;
+    const int sampleRate = 44100;
     final int numSamples = (sampleRate * durationSeconds).toInt();
     final int numChannels = 1;
     final int bitsPerSample = 16;
