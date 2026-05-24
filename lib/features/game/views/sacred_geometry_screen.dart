@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../widgets/sacred_geometry_painter.dart';
 
 class SacredGeometryScreen extends StatelessWidget {
   const SacredGeometryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final double shortestSide = MediaQuery.of(context).size.shortestSide;
-    final double size = shortestSide * 0.85;
+    // Determine screen dimensions to enforce a landscape 4:3 blueprint card
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+    
+    // Fit within screen with margins
+    double width = screenWidth * 0.92;
+    double height = width * 0.75;
+    
+    if (height > screenHeight * 0.78) {
+      height = screenHeight * 0.78;
+      width = height / 0.75;
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFE5E5E5), // Light gray drafting table background
@@ -32,29 +43,22 @@ class SacredGeometryScreen extends StatelessWidget {
       ),
       body: Center(
         child: Container(
-          width: size,
-          height: size,
+          width: width,
+          height: height,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8.0),
+            borderRadius: BorderRadius.circular(4.0),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
+                color: Colors.black.withValues(alpha: 0.18),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
           clipBehavior: Clip.antiAlias,
-          child: ClipRect(
-            child: Align(
-              alignment: const Alignment(-0.69, 0.22),
-              widthFactor: 0.39,
-              heightFactor: 0.52,
-              child: Image.asset(
-                'assets/images/blueprint.jpg',
-                fit: BoxFit.contain,
-              ),
-            ),
+          child: CustomPaint(
+            size: Size(width, height),
+            painter: SacredGeometryPainter(),
           ),
         ),
       ),
