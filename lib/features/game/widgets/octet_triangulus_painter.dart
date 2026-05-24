@@ -33,9 +33,8 @@ class OctetTriangulusWidget extends StatelessWidget {
     this.showSwara = false,
   });
 
-  // Coordinates for the 12 nodes based on the mathematical blueprint layout
+  // Coordinates for the 12 nodes based on the mathematical layout
   static final List<NodePosition> nodes = [
-    // Upright stabilizing triangle (Turquoise/Neon Blue)
     const NodePosition(
       id: 'T1',
       label: 'C',
@@ -44,86 +43,80 @@ class OctetTriangulusWidget extends StatelessWidget {
       color: Kri8Colors.neonBlue,
     ),
     const NodePosition(
-      id: 'T2',
-      label: 'F',
-      swaraLabel: 'M1',
-      relativeOffset: Offset(0.83, 0.48), // Bottom-right vertex
-      color: Kri8Colors.neonBlue,
-    ),
-    const NodePosition(
-      id: 'T3',
-      label: 'G',
-      swaraLabel: 'P',
-      relativeOffset: Offset(-0.83, 0.48), // Bottom-left vertex
-      color: Kri8Colors.neonBlue,
-    ),
-
-    // Tension apex / bottom vertex of inverted triangle (Hot Pink)
-    const NodePosition(
-      id: 'D1',
-      label: 'F#',
-      swaraLabel: 'M2',
-      relativeOffset: Offset(0.0, 0.96), // Bottom center
-      color: Colors.redAccent,
-    ),
-
-    // Right hemisphere chromatic notes (Violet)
-    const NodePosition(
       id: 'O1',
-      label: 'C#',
+      label: 'Db',
       swaraLabel: 'R1',
-      relativeOffset: Offset(0.3, -0.52),
+      relativeOffset: Offset(0.35, -0.60),
       color: Kri8Colors.secondary,
     ),
     const NodePosition(
       id: 'O2',
       label: 'D',
       swaraLabel: 'R2/G1',
-      relativeOffset: Offset(0.62, -0.36),
+      relativeOffset: Offset(0.72, -0.42),
       color: Kri8Colors.secondary,
     ),
     const NodePosition(
       id: 'O3',
-      label: 'D#',
+      label: 'Eb',
       swaraLabel: 'R3/G2',
-      relativeOffset: Offset(0.6, 0.0),
+      relativeOffset: Offset(0.7, 0.0),
       color: Kri8Colors.secondary,
     ),
     const NodePosition(
       id: 'O4',
       label: 'E',
       swaraLabel: 'G3',
-      relativeOffset: Offset(0.62, 0.36),
+      relativeOffset: Offset(0.72, 0.42),
       color: Kri8Colors.secondary,
     ),
-
-    // Left hemisphere chromatic notes (Gold)
+    const NodePosition(
+      id: 'T2',
+      label: 'F',
+      swaraLabel: 'M1',
+      relativeOffset: Offset(0.866 * 0.96, 0.5 * 0.96), // Bottom-right vertex
+      color: Kri8Colors.neonBlue,
+    ),
+    const NodePosition(
+      id: 'D1',
+      label: 'F#',
+      swaraLabel: 'M2',
+      relativeOffset: Offset(0.0, 0.96), // Bottom vertex of inverted triangle
+      color: Colors.redAccent,
+    ),
+    const NodePosition(
+      id: 'T3',
+      label: 'G',
+      swaraLabel: 'P',
+      relativeOffset: Offset(-0.866 * 0.96, 0.5 * 0.96), // Bottom-left vertex
+      color: Kri8Colors.neonBlue,
+    ),
     const NodePosition(
       id: 'O5',
-      label: 'G#',
+      label: 'Ab',
       swaraLabel: 'D1',
-      relativeOffset: Offset(-0.62, 0.36),
+      relativeOffset: Offset(-0.72, 0.42),
       color: Kri8Colors.gold,
     ),
     const NodePosition(
       id: 'O6',
       label: 'A',
       swaraLabel: 'D2/N1',
-      relativeOffset: Offset(-0.6, 0.0),
+      relativeOffset: Offset(-0.7, 0.0),
       color: Kri8Colors.gold,
     ),
     const NodePosition(
       id: 'O7',
-      label: 'A#',
+      label: 'Bb',
       swaraLabel: 'D3/N2',
-      relativeOffset: Offset(-0.62, -0.36),
+      relativeOffset: Offset(-0.72, -0.42),
       color: Kri8Colors.gold,
     ),
     const NodePosition(
       id: 'O8',
       label: 'B',
       swaraLabel: 'N3',
-      relativeOffset: Offset(-0.3, -0.52),
+      relativeOffset: Offset(-0.35, -0.60),
       color: Kri8Colors.gold,
     ),
   ];
@@ -138,7 +131,7 @@ class OctetTriangulusWidget extends StatelessWidget {
           
           final double centerX = size / 2;
           final double centerY = size / 2;
-          final double R = size * 0.45; // layout radius
+          final double R = size * 0.44; // layout radius
 
           // Find the closest node to the tapped coordinate
           NodePosition? closestNode;
@@ -155,7 +148,7 @@ class OctetTriangulusWidget extends StatelessWidget {
             }
           }
 
-          final double hitRadius = R * 0.20; // tap hit zone radius
+          final double hitRadius = R * 0.22; // tap hit zone radius
           if (closestNode != null && minDistance < hitRadius) {
             controller.playNode(closestNode.id);
           }
@@ -198,30 +191,47 @@ class OctetTriangulusPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final R = size.width * 0.45;
+    final R = size.width * 0.44;
 
-    // Line paints (white/translucent for dark themed game background)
-    final strokePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.65)
+    // 1. DRAW BACKGROUND & GRID
+    final bgPaint = Paint()..color = const Color(0xFF0F3E70); // Authentic blueprint blue
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+
+    final gridPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.05)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+      ..strokeWidth = 0.5;
 
-    final doubleStrokePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.35)
+    final double gridSpacing = size.width / 16.0;
+    for (double x = 0; x <= size.width; x += gridSpacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (double y = 0; y <= size.height; y += gridSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    // 2. PAINTS
+    final linePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.8)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.9;
 
-    final axisPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.15)
+    final doubleLinePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.5)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
+      ..strokeWidth = 0.7;
 
-    // === 1. DRAW AXES ===
+    final axisPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.25)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6;
+
+    // === 3. DRAW AXES ===
     // Vertical dashed axis
-    double y = -R;
-    const dash = 6.0;
-    const gap = 4.0;
-    while (y < R) {
+    double y = -R * 1.1;
+    final dash = 6.0;
+    final gap = 4.0;
+    while (y < R * 1.1) {
       canvas.drawLine(
         Offset(center.dx, center.dy + y),
         Offset(center.dx, center.dy + y + dash),
@@ -231,8 +241,8 @@ class OctetTriangulusPainter extends CustomPainter {
     }
 
     // Horizontal dashed axis
-    double x = -R;
-    while (x < R) {
+    double x = -R * 1.1;
+    while (x < R * 1.1) {
       canvas.drawLine(
         Offset(center.dx + x, center.dy),
         Offset(center.dx + x + dash, center.dy),
@@ -244,14 +254,12 @@ class OctetTriangulusPainter extends CustomPainter {
     // Tick marks on axes
     const tickLen = 4.0;
     for (double i = -R; i <= R; i += R / 4) {
-      if (i.abs() < 1.0) continue; // skip center
-      // vertical ticks on horizontal axis
+      if (i.abs() < 1.0) continue;
       canvas.drawLine(
         Offset(center.dx + i, center.dy - tickLen),
         Offset(center.dx + i, center.dy + tickLen),
         axisPaint,
       );
-      // horizontal ticks on vertical axis
       canvas.drawLine(
         Offset(center.dx - tickLen, center.dy + i),
         Offset(center.dx + tickLen, center.dy + i),
@@ -259,7 +267,7 @@ class OctetTriangulusPainter extends CustomPainter {
       );
     }
 
-    // === 2. GEOMETRY DEFINITIONS ===
+    // === 4. GEOMETRY DEFINITIONS ===
     final R_inner = R * 0.96;
     final circleRadius = R_inner * 0.54;
     final d = R_inner - circleRadius;
@@ -294,36 +302,43 @@ class OctetTriangulusPainter extends CustomPainter {
       ..lineTo(invBottom.dx, invBottom.dy)
       ..close();
 
-    // === 3. DRAW SHAPES (CORRECT ORDER) ===
+    // === 5. DRAW SHAPES (CORRECT ORDER) ===
     
     // Outer double concentric circles
-    canvas.drawCircle(center, R, strokePaint);
-    canvas.drawCircle(center, R_inner, doubleStrokePaint);
+    canvas.drawCircle(center, R, linePaint);
+    canvas.drawCircle(center, R_inner, doubleLinePaint);
 
     // Three double inner circles
-    canvas.drawCircle(topCircleCenter, circleRadius, strokePaint);
-    canvas.drawCircle(topCircleCenter, circleRadius * 0.95, doubleStrokePaint);
+    canvas.drawCircle(topCircleCenter, circleRadius, linePaint);
+    canvas.drawCircle(topCircleCenter, circleRadius * 0.95, doubleLinePaint);
 
-    canvas.drawCircle(leftCircleCenter, circleRadius, strokePaint);
-    canvas.drawCircle(leftCircleCenter, circleRadius * 0.95, doubleStrokePaint);
+    canvas.drawCircle(leftCircleCenter, circleRadius, linePaint);
+    canvas.drawCircle(leftCircleCenter, circleRadius * 0.95, doubleLinePaint);
 
-    canvas.drawCircle(rightCircleCenter, circleRadius, strokePaint);
-    canvas.drawCircle(rightCircleCenter, circleRadius * 0.95, doubleStrokePaint);
+    canvas.drawCircle(rightCircleCenter, circleRadius, linePaint);
+    canvas.drawCircle(rightCircleCenter, circleRadius * 0.95, doubleLinePaint);
 
     // Main upright triangle
-    canvas.drawPath(mainTrianglePath, strokePaint);
+    canvas.drawPath(mainTrianglePath, linePaint);
 
     // Inverted triangle
-    canvas.drawPath(invertedTrianglePath, strokePaint);
+    canvas.drawPath(invertedTrianglePath, linePaint);
 
     // Four small node circles at the vertices
     final nodeRadius = R * 0.08;
-    canvas.drawCircle(topVertex, nodeRadius, strokePaint);
-    canvas.drawCircle(bottomLeft, nodeRadius, strokePaint);
-    canvas.drawCircle(bottomRight, nodeRadius, strokePaint);
-    canvas.drawCircle(invBottom, nodeRadius, strokePaint);
+    canvas.drawCircle(topVertex, nodeRadius, linePaint);
+    canvas.drawCircle(topVertex, nodeRadius * 0.75, doubleLinePaint);
 
-    // === 4. DRAW NODES & LABELS ===
+    canvas.drawCircle(bottomLeft, nodeRadius, linePaint);
+    canvas.drawCircle(bottomLeft, nodeRadius * 0.75, doubleLinePaint);
+
+    canvas.drawCircle(bottomRight, nodeRadius, linePaint);
+    canvas.drawCircle(bottomRight, nodeRadius * 0.75, doubleLinePaint);
+
+    canvas.drawCircle(invBottom, nodeRadius, linePaint);
+    canvas.drawCircle(invBottom, nodeRadius * 0.75, doubleLinePaint);
+
+    // === 6. DRAW NODES & LABELS ===
     for (final node in nodes) {
       final double nodeX = center.dx + node.relativeOffset.dx * R;
       final double nodeY = center.dy + node.relativeOffset.dy * R;
@@ -332,23 +347,25 @@ class OctetTriangulusPainter extends CustomPainter {
       final bool isHighlighted = highlightedNode == node.id;
       final bool isActive = activeNodes.contains(node.id);
 
-      Color highlightColor = isErrorState ? Colors.redAccent : node.color;
+      // Yellow/green highlight color for active blueprint notes, red for errors
+      Color highlightColor = isErrorState
+          ? Colors.redAccent
+          : (isHighlighted ? const Color(0xFF00FF7F) : const Color(0xFFFFD700));
 
-      // Draw highlighted visual feedback
       if (isHighlighted || isActive) {
-        // Double thicker ring
+        // Draw a highlighted ring around active notes
         final Paint activePaint = Paint()
           ..color = highlightColor
           ..style = PaintingStyle.stroke
-          ..strokeWidth = isHighlighted ? 2.5 : 1.6;
-        canvas.drawCircle(nodeOffset, nodeRadius * 1.15, activePaint);
+          ..strokeWidth = isHighlighted ? 2.0 : 1.2;
+        canvas.drawCircle(nodeOffset, nodeRadius * 1.25, activePaint);
       }
 
       // Draw text label
       final String text = showSwara ? node.swaraLabel : node.label;
       final Color textColor = isHighlighted
           ? highlightColor
-          : (isActive ? Colors.white : Colors.white.withValues(alpha: 0.6));
+          : (isActive ? const Color(0xFFFFD700) : Colors.white.withValues(alpha: 0.9));
 
       final textSpan = TextSpan(
         text: text,
@@ -356,6 +373,7 @@ class OctetTriangulusPainter extends CustomPainter {
           color: textColor,
           fontSize: 9,
           fontWeight: (isHighlighted || isActive) ? FontWeight.bold : FontWeight.w500,
+          fontFamily: 'monospace',
         ),
       );
       final textPainter = TextPainter(

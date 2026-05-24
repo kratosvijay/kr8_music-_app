@@ -32,12 +32,32 @@ class SacredGeometryScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: Center(
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: CustomPaint(
-            size: Size(size, size),
-            painter: SacredGeometryPainter(),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 900,
+              maxHeight: 675,
+            ),
+            child: AspectRatio(
+              aspectRatio: 4 / 3,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 25,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: CustomPaint(
+                  painter: SacredGeometryPainter(),
+                ),
+              ),
+            ),
           ),
         ),
       ),
