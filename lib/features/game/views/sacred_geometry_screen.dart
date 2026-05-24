@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../widgets/sacred_geometry_painter.dart';
 
 class SacredGeometryScreen extends StatelessWidget {
   const SacredGeometryScreen({super.key});
@@ -56,9 +55,9 @@ class SacredGeometryScreen extends StatelessWidget {
             ],
           ),
           clipBehavior: Clip.antiAlias,
-          child: CustomPaint(
-            size: Size(width, height),
-            painter: SacredGeometryPainter(),
+          child: Image.asset(
+            'assets/images/blueprint.jpg',
+            fit: BoxFit.cover,
           ),
         ),
       ),
