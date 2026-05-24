@@ -70981,7 +70981,7 @@ a_w(a){if(a===0||a===1)return 0
 return Math.sin(a*4*3.141592653589793)*12*(1-a)},
 N(a){var s,r,q,p=this,o=null,n=t.w,m=A.bv(a,o,n).w
 n=A.bv(a,o,n).w
-s=Math.min(Math.min(m.a.a,800)*0.85,n.a.b*0.45)
+s=Math.min(Math.min(m.a.a,800)*0.85,n.a.b*0.38)
 n=p.Ya(a)
 m=p.XY(a)
 r=p.e
@@ -71283,42 +71283,43 @@ c2.aG(c9,new A.p(a7-a6.c/2,a8-a6.a.c.geq()/2))}},
 iq(a){var s=this
 return a.d!==s.d||a.c!==s.c||a.e!==s.e||a.f!==s.f}}
 A.I3.prototype={
-aG(a,b){var s,r,q,p,o,n,m,l,k,j,i,h,g=$.Z(),f=A.ax()
-f.r=B.k.gl()
-f.b=B.ak
-f.c=1.2
+aG(a,b){var s,r,q,p,o,n,m,l,k,j,i,h,g,f,e=$.Z(),d=A.ax()
+d.r=B.k.gl()
+d.b=B.ak
+d.c=1.2
 s=b.a
 r=s/2
 q=b.b/2
 p=s*0.45
-a.cN(new A.p(r,q),p,f)
-s=p*Math.sin(1.0471975511965976)
-o=q+p*0.5
-n=A.al(["top",new A.p(r,q-p),"left",new A.p(r-s,o),"right",new A.p(r+s,o)],t.N,t.o)
-g=g.r
-m=A.cj(g)
-m.aF(new A.hI(n.i(0,"top").a,n.i(0,"top").b))
-m.aF(new A.cJ(n.i(0,"left").a,n.i(0,"left").b))
-m.aF(new A.cJ(n.i(0,"right").a,n.i(0,"right").b))
-m.aF(new A.mt())
-a.fA(m,f)
-l=-0.5*p
-k=(p+l)/Math.sqrt(3)
-o=q+l
-m=A.cj(g)
-m.aF(new A.hI(r-k,o))
-m.aF(new A.cJ(r+k,o))
-m.aF(new A.cJ(r,q+p))
-m.aF(new A.mt())
-a.fA(m,f)
-j=p*0.38
-i=p*0.32
-h=Math.sin(1.0471975511965976)
-a.cN(new A.p(r,q-i),j,f)
-o=i*h
-q+=i*0.5
-a.cN(new A.p(r-o,q),j,f)
-a.cN(new A.p(r+o,q),j,f)},
+a.cN(new A.p(r,q),p,d)
+o=p*1.73
+s=Math.sqrt(3)/2*o/2
+n=q-s
+m=o/2
+l=r-m
+s=q+s
+m=r+m
+e=e.r
+k=A.cj(e)
+k.aF(new A.hI(r,n))
+k.aF(new A.cJ(l,s))
+k.aF(new A.cJ(m,s))
+k.aF(new A.mt())
+a.fA(k,d)
+j=o*0.32
+i=n+j
+h=j*0.9
+s-=j*0.5
+g=(i-n)/Math.sqrt(3)
+f=A.cj(e)
+f.aF(new A.hI(r-g,i))
+f.aF(new A.cJ(r+g,i))
+f.aF(new A.cJ(r,q+p))
+f.aF(new A.mt())
+a.fA(f,d)
+a.cN(new A.p(r,i),j,d)
+a.cN(new A.p(l+h,s),j,d)
+a.cN(new A.p(m-h,s),j,d)},
 iq(a){return!1}}
 A.xr.prototype={
 on(){this.Ga()
