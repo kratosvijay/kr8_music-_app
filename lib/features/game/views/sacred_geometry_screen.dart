@@ -8,18 +8,8 @@ class SacredGeometryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine screen dimensions to enforce a landscape 4:3 blueprint card
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double screenHeight = MediaQuery.of(context).size.height;
-    
-    // Fit within screen with margins
-    double width = screenWidth * 0.92;
-    double height = width * 0.75;
-    
-    if (height > screenHeight * 0.78) {
-      height = screenHeight * 0.78;
-      width = height / 0.75;
-    }
+    final double shortestSide = MediaQuery.of(context).size.shortestSide;
+    final double size = shortestSide * 0.85;
 
     return Scaffold(
       backgroundColor: const Color(0xFFE5E5E5), // Light gray drafting table background
@@ -42,22 +32,10 @@ class SacredGeometryScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: Center(
-        child: Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
+        child: SizedBox(
+          width: size,
+          height: size,
           child: CustomPaint(
-            size: Size(width, height),
             painter: SacredGeometryPainter(),
           ),
         ),
