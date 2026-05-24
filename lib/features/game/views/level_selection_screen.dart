@@ -6,6 +6,7 @@ import '../../../core/widgets/glass_container.dart';
 import '../controllers/game_controller.dart';
 import 'game_screen.dart';
 import '../../raga_explorer/views/raga_explorer_screen.dart';
+import 'sacred_geometry_screen.dart';
 
 class LevelSelectionScreen extends StatelessWidget {
   LevelSelectionScreen({super.key});
@@ -160,27 +161,37 @@ class LevelSelectionScreen extends StatelessWidget {
             ),
           ],
         ),
-        Obx(() => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(
-                color: Kri8Colors.gold.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Kri8Colors.gold.withValues(alpha: 0.25)),
-              ),
-              child: Row(
-                children: [
-                  const FaIcon(FontAwesomeIcons.bolt, color: Kri8Colors.gold, size: 14),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${controller.streak.value} Days',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Kri8Colors.gold,
-                          fontWeight: FontWeight.bold,
-                        ),
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => Get.to(() => const SacredGeometryScreen()),
+              icon: const FaIcon(FontAwesomeIcons.circleNodes, color: Kri8Colors.primary, size: 20),
+              tooltip: 'Sacred Geometry Wireframe',
+            ),
+            const SizedBox(width: 8),
+            Obx(() => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: Kri8Colors.gold.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Kri8Colors.gold.withValues(alpha: 0.25)),
                   ),
-                ],
-              ),
-            )),
+                  child: Row(
+                    children: [
+                      const FaIcon(FontAwesomeIcons.bolt, color: Kri8Colors.gold, size: 14),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${controller.streak.value} Days',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: Kri8Colors.gold,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                )),
+          ],
+        ),
       ],
     );
   }
