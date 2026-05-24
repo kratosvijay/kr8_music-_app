@@ -33,90 +33,90 @@ class OctetTriangulusWidget extends StatelessWidget {
     this.showSwara = false,
   });
 
-  // Coordinates for the 12 nodes based on the mathematical layout
+  // Coordinates for the 12 nodes based on the mathematical layout of the blueprint
   static final List<NodePosition> nodes = [
     const NodePosition(
       id: 'T1',
       label: 'C',
       swaraLabel: 'S',
-      relativeOffset: Offset(0.0, -0.72), // Top vertex
+      relativeOffset: Offset(0.0, -0.96), // Top vertex small circle
       color: Kri8Colors.neonBlue,
     ),
     const NodePosition(
       id: 'O1',
       label: 'Db',
       swaraLabel: 'R1',
-      relativeOffset: Offset(0.525, -0.91),
+      relativeOffset: Offset(0.22, -0.44),
       color: Kri8Colors.secondary,
     ),
     const NodePosition(
       id: 'O2',
       label: 'D',
       swaraLabel: 'R2/G1',
-      relativeOffset: Offset(0.91, -0.525),
+      relativeOffset: Offset(0.22, -0.28),
       color: Kri8Colors.secondary,
     ),
     const NodePosition(
       id: 'O3',
       label: 'Eb',
       swaraLabel: 'R3/G2',
-      relativeOffset: Offset(1.05, 0.0),
+      relativeOffset: Offset(0.38, 0.28),
       color: Kri8Colors.secondary,
     ),
     const NodePosition(
       id: 'O4',
       label: 'E',
       swaraLabel: 'G3',
-      relativeOffset: Offset(0.91, 0.525),
+      relativeOffset: Offset(0.56, 0.34),
       color: Kri8Colors.secondary,
     ),
     const NodePosition(
       id: 'T2',
       label: 'F',
       swaraLabel: 'M1',
-      relativeOffset: Offset(0.89, 0.82), // Bottom-right vertex
+      relativeOffset: Offset(0.83, 0.48), // Bottom-right vertex small circle
       color: Kri8Colors.neonBlue,
     ),
     const NodePosition(
       id: 'D1',
       label: 'F#',
       swaraLabel: 'M2',
-      relativeOffset: Offset(0.0, 0.88), // Bottom vertex of inverted triangle
+      relativeOffset: Offset(0.0, 0.96), // Bottom center small circle
       color: Colors.redAccent,
     ),
     const NodePosition(
       id: 'T3',
       label: 'G',
       swaraLabel: 'P',
-      relativeOffset: Offset(-0.89, 0.82), // Bottom-left vertex
+      relativeOffset: Offset(-0.83, 0.48), // Bottom-left vertex small circle
       color: Kri8Colors.neonBlue,
     ),
     const NodePosition(
       id: 'O5',
       label: 'Ab',
       swaraLabel: 'D1',
-      relativeOffset: Offset(-0.91, 0.525),
+      relativeOffset: Offset(-0.38, 0.28),
       color: Kri8Colors.gold,
     ),
     const NodePosition(
       id: 'O6',
       label: 'A',
       swaraLabel: 'D2/N1',
-      relativeOffset: Offset(-1.05, 0.0),
+      relativeOffset: Offset(-0.65, 0.08),
       color: Kri8Colors.gold,
     ),
     const NodePosition(
       id: 'O7',
       label: 'Bb',
       swaraLabel: 'D3/N2',
-      relativeOffset: Offset(-0.91, -0.525),
+      relativeOffset: Offset(-0.28, -0.44),
       color: Kri8Colors.gold,
     ),
     const NodePosition(
       id: 'O8',
       label: 'B',
       swaraLabel: 'N3',
-      relativeOffset: Offset(-0.525, -0.91),
+      relativeOffset: Offset(-0.58, -0.34),
       color: Kri8Colors.gold,
     ),
   ];
@@ -131,7 +131,7 @@ class OctetTriangulusWidget extends StatelessWidget {
           
           final double centerX = size / 2;
           final double centerY = size / 2;
-          final double R = size * 0.45 * 0.92; // layout radius
+          final double R = size * 0.44; // layout radius
 
           // Find the closest node to the tapped coordinate
           NodePosition? closestNode;
@@ -148,7 +148,7 @@ class OctetTriangulusWidget extends StatelessWidget {
             }
           }
 
-          final double hitRadius = R * 0.25; // tap hit zone radius
+          final double hitRadius = R * 0.22; // tap hit zone radius
           if (closestNode != null && minDistance < hitRadius) {
             controller.playNode(closestNode.id);
           }
@@ -191,17 +191,30 @@ class OctetTriangulusPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    // Reduce overall geometry scale by 8%
-    final outerRadius = size.width * 0.45 * 0.92;
+    final R = size.width * 0.44;
 
-    // Paints (white/translucent for dark themed game background, transparent canvas)
-    final strokePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.85)
+    // 1. DRAW DRAFTING GRID (very subtle white lines in transparent background)
+    final gridPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.04)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5;
+
+    final double gridSpacing = size.width / 16.0;
+    for (double x = 0; x <= size.width; x += gridSpacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (double y = 0; y <= size.height; y += gridSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    // 2. PAINTS
+    final linePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.8)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.9;
 
-    final doubleStrokePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.55)
+    final doubleLinePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.7;
 
@@ -210,34 +223,34 @@ class OctetTriangulusPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.6;
 
-    // === 1. GUIDE LINES (subtle dashed lines) ===
+    // === 3. DRAW AXES ===
     // Vertical dashed centerline
-    double y = -outerRadius * 1.1;
-    final dash = 5.0;
+    double curY = -R * 1.1;
+    final dash = 6.0;
     final gap = 4.0;
-    while (y < outerRadius * 1.1) {
+    while (curY < R * 1.1) {
       canvas.drawLine(
-        Offset(center.dx, center.dy + y),
-        Offset(center.dx, center.dy + y + dash),
+        Offset(center.dx, center.dy + curY),
+        Offset(center.dx, center.dy + curY + dash),
         axisPaint,
       );
-      y += dash + gap;
+      curY += dash + gap;
     }
 
     // Horizontal dashed centerline
-    double x = -outerRadius * 1.1;
-    while (x < outerRadius * 1.1) {
+    double curX = -R * 1.1;
+    while (curX < R * 1.1) {
       canvas.drawLine(
-        Offset(center.dx + x, center.dy),
-        Offset(center.dx + x + dash, center.dy),
+        Offset(center.dx + curX, center.dy),
+        Offset(center.dx + curX + dash, center.dy),
         axisPaint,
       );
-      x += dash + gap;
+      curX += dash + gap;
     }
 
     // Tick marks on axes
-    const tickLen = 3.0;
-    for (double i = -outerRadius; i <= outerRadius; i += outerRadius / 4) {
+    const tickLen = 4.0;
+    for (double i = -R; i <= R; i += R / 4) {
       if (i.abs() < 1.0) continue;
       canvas.drawLine(
         Offset(center.dx + i, center.dy - tickLen),
@@ -251,96 +264,75 @@ class OctetTriangulusPainter extends CustomPainter {
       );
     }
 
-    // === 2. GEOMETRY DEFINITIONS ===
-    final R_inner = outerRadius * 0.96;
+    // === 4. GEOMETRY DEFINITIONS ===
+    final R_inner = R * 0.96;
 
-    // Main upright triangle
-    final side = outerRadius * 1.78;
-    final triangleHeight = sqrt(3) / 2 * side;
+    // Upright equilateral triangle (inscribed in R_inner)
+    final topVertex = Offset(center.dx, center.dy - R_inner);
+    final bottomLeft = Offset(center.dx - R_inner * cos(pi / 6), center.dy + R_inner * sin(pi / 6));
+    final bottomRight = Offset(center.dx + R_inner * cos(pi / 6), center.dy + R_inner * sin(pi / 6));
 
-    final top = Offset(
-      center.dx,
-      center.dy - triangleHeight / 2 + outerRadius * 0.05,
-    );
-
-    final left = Offset(
-      center.dx - side / 2,
-      center.dy + triangleHeight / 2 + outerRadius * 0.05,
-    );
-
-    final right = Offset(
-      center.dx + side / 2,
-      center.dy + triangleHeight / 2 + outerRadius * 0.05,
-    );
-
-    // Inner circles
-    final circleRadius = outerRadius * 0.29;
-
-    final topCircleCenter = Offset(
-      center.dx,
-      center.dy - outerRadius * 0.36,
-    );
-
-    final leftCircleCenter = Offset(
-      center.dx - outerRadius * 0.42,
-      center.dy + outerRadius * 0.12,
-    );
-
-    final rightCircleCenter = Offset(
-      center.dx + outerRadius * 0.42,
-      center.dy + outerRadius * 0.12,
-    );
-
-    // Inverted triangle
-    final invTopY = topCircleCenter.dy;
-    final invTopXDist = (invTopY - top.dy).abs() / sqrt(3);
-    final invTopL = Offset(center.dx - invTopXDist * 1.4, invTopY);
-    final invTopR = Offset(center.dx + invTopXDist * 1.4, invTopY);
-    final invBottom = Offset(center.dx, center.dy + outerRadius * 0.88);
-
-    // Paths
     final mainTrianglePath = Path()
-      ..moveTo(top.dx, top.dy)
-      ..lineTo(left.dx, left.dy)
-      ..lineTo(right.dx, right.dy)
+      ..moveTo(topVertex.dx, topVertex.dy)
+      ..lineTo(bottomLeft.dx, bottomLeft.dy)
+      ..lineTo(bottomRight.dx, bottomRight.dy)
       ..close();
+    canvas.drawPath(mainTrianglePath, linePaint);
+
+    // Tangent inner circles (radius = R_inner * 0.54, tangent to boundary)
+    final double circleRadius = R_inner * 0.54;
+    final double d = R_inner - circleRadius;
+
+    final topCircleCenter = Offset(center.dx, center.dy - d);
+    final leftCircleCenter = Offset(center.dx - d * cos(pi / 6), center.dy + d * sin(pi / 6));
+    final rightCircleCenter = Offset(center.dx + d * cos(pi / 6), center.dy + d * sin(pi / 6));
+
+    // Draw three double inner circles
+    canvas.drawCircle(topCircleCenter, circleRadius, linePaint);
+    canvas.drawCircle(topCircleCenter, circleRadius * 0.95, doubleLinePaint);
+
+    canvas.drawCircle(leftCircleCenter, circleRadius, linePaint);
+    canvas.drawCircle(leftCircleCenter, circleRadius * 0.95, doubleLinePaint);
+
+    canvas.drawCircle(rightCircleCenter, circleRadius, linePaint);
+    canvas.drawCircle(rightCircleCenter, circleRadius * 0.95, doubleLinePaint);
+
+    // Inverted narrow triangle (sharp V-shape)
+    final double invTopY = center.dy - R_inner * 0.68;
+    final double invTopXDist = R_inner * 0.16;
+    final invTopL = Offset(center.dx - invTopXDist, invTopY);
+    final invTopR = Offset(center.dx + invTopXDist, invTopY);
+    final invBottom = Offset(center.dx, center.dy + R_inner);
 
     final invertedTrianglePath = Path()
       ..moveTo(invTopL.dx, invTopL.dy)
       ..lineTo(invTopR.dx, invTopR.dy)
       ..lineTo(invBottom.dx, invBottom.dy)
       ..close();
+    canvas.drawPath(invertedTrianglePath, linePaint);
 
-    // === 3. DRAW SHAPES (CORRECT ORDER) ===
-    
-    // Outer rings
-    canvas.drawCircle(center, outerRadius, strokePaint);
-    canvas.drawCircle(center, R_inner, doubleStrokePaint);
+    // Outer double concentric circles
+    canvas.drawCircle(center, R, linePaint);
+    canvas.drawCircle(center, R_inner, doubleLinePaint);
 
-    // Three inner circles (full)
-    canvas.drawCircle(topCircleCenter, circleRadius, strokePaint);
-    canvas.drawCircle(leftCircleCenter, circleRadius, strokePaint);
-    canvas.drawCircle(rightCircleCenter, circleRadius, strokePaint);
+    // Small double node circles at vertices
+    final nodeRadius = R * 0.08;
+    canvas.drawCircle(topVertex, nodeRadius, linePaint);
+    canvas.drawCircle(topVertex, nodeRadius * 0.75, doubleLinePaint);
 
-    // Main upright triangle
-    canvas.drawPath(mainTrianglePath, strokePaint);
+    canvas.drawCircle(bottomLeft, nodeRadius, linePaint);
+    canvas.drawCircle(bottomLeft, nodeRadius * 0.75, doubleLinePaint);
 
-    // Inverted triangle
-    canvas.drawPath(invertedTrianglePath, strokePaint);
+    canvas.drawCircle(bottomRight, nodeRadius, linePaint);
+    canvas.drawCircle(bottomRight, nodeRadius * 0.75, doubleLinePaint);
 
-    // Small node circles (40% smaller)
-    final nodeRadius = outerRadius * 0.048;
-    canvas.drawCircle(top, nodeRadius, strokePaint);
-    canvas.drawCircle(left, nodeRadius, strokePaint);
-    canvas.drawCircle(right, nodeRadius, strokePaint);
-    canvas.drawCircle(invBottom, nodeRadius, strokePaint);
+    canvas.drawCircle(invBottom, nodeRadius, linePaint);
+    canvas.drawCircle(invBottom, nodeRadius * 0.75, doubleLinePaint);
 
-    // === 4. DRAW NODES & LABELS ===
-    final labelRadius = outerRadius * 1.05;
-
+    // === 5. DRAW LABELS & ACTIVE HIGHLIGHTS ===
     for (final node in nodes) {
-      final double nodeX = center.dx + node.relativeOffset.dx * outerRadius;
-      final double nodeY = center.dy + node.relativeOffset.dy * outerRadius;
+      final double nodeX = center.dx + node.relativeOffset.dx * R;
+      final double nodeY = center.dy + node.relativeOffset.dy * R;
       final Offset nodeOffset = Offset(nodeX, nodeY);
 
       final bool isHighlighted = highlightedNode == node.id;
@@ -354,7 +346,7 @@ class OctetTriangulusPainter extends CustomPainter {
         final Paint activePaint = Paint()
           ..color = highlightColor
           ..style = PaintingStyle.stroke
-          ..strokeWidth = isHighlighted ? 1.8 : 1.2;
+          ..strokeWidth = isHighlighted ? 2.0 : 1.2;
         canvas.drawCircle(nodeOffset, nodeRadius * 1.25, activePaint);
       }
 
@@ -362,13 +354,13 @@ class OctetTriangulusPainter extends CustomPainter {
       final String text = showSwara ? node.swaraLabel : node.label;
       final Color textColor = isHighlighted
           ? highlightColor
-          : (isActive ? const Color(0xFFFFD700) : Colors.white.withValues(alpha: 0.95));
+          : (isActive ? const Color(0xFFFFD700) : Colors.white.withValues(alpha: 0.9));
 
       final textSpan = TextSpan(
         text: text,
         style: TextStyle(
           color: textColor,
-          fontSize: 8.5,
+          fontSize: 9,
           fontWeight: (isHighlighted || isActive) ? FontWeight.bold : FontWeight.w500,
           fontFamily: 'monospace',
         ),
