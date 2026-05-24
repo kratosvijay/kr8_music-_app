@@ -77,10 +77,19 @@ class SacredGeometryPainter extends CustomPainter {
       ..close();
     canvas.drawPath(invertedTrianglePath, strokePaint);
 
-    // 6. Draw inner circles
-    canvas.drawCircle(topCircleCenter, circleRadius, strokePaint);
-    canvas.drawCircle(leftCircleCenter, circleRadius, strokePaint);
-    canvas.drawCircle(rightCircleCenter, circleRadius, strokePaint);
+    // 6. Draw inner arcs (partial — hides backside overlaps for clean geometry)
+
+    // Top circle — only lower visible portion
+    final topRect = Rect.fromCircle(center: topCircleCenter, radius: circleRadius);
+    canvas.drawArc(topRect, pi * 0.1, pi * 0.8, false, strokePaint);
+
+    // Left circle — visible arc facing inward/right
+    final leftRect = Rect.fromCircle(center: leftCircleCenter, radius: circleRadius);
+    canvas.drawArc(leftRect, pi * 0.75, pi * 1.5, false, strokePaint);
+
+    // Right circle — visible arc facing inward/left
+    final rightRect = Rect.fromCircle(center: rightCircleCenter, radius: circleRadius);
+    canvas.drawArc(rightRect, -pi * 0.25, pi * 1.5, false, strokePaint);
   }
 
   @override
