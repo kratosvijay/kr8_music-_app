@@ -10,13 +10,10 @@ class SacredGeometryPainter extends CustomPainter {
       ..strokeWidth = 1.2;
 
     final center = Offset(size.width / 2, size.height / 2);
-    final outerRadius = size.width * 0.45; // Responsive scaling fitting center composition
+    final outerRadius = size.width * 0.45;
 
-    // 1. Draw outer circle
-    canvas.drawCircle(center, outerRadius, strokePaint);
-
-    // 2. Derive main triangle geometry
-    final side = outerRadius * 1.52;
+    // Derive triangle geometry
+    final side = outerRadius * 1.65;
     final triangleHeight = sqrt(3) / 2 * side;
 
     final top = Offset(
@@ -34,35 +31,25 @@ class SacredGeometryPainter extends CustomPainter {
       center.dy + triangleHeight / 2,
     );
 
-    // 3. Draw main triangle
-    final mainTrianglePath = Path()
-      ..moveTo(top.dx, top.dy)
-      ..lineTo(left.dx, left.dy)
-      ..lineTo(right.dx, right.dy)
-      ..close();
-    canvas.drawPath(mainTrianglePath, strokePaint);
-
-    // 4. Derive circle geometry
-    final circleRadius = outerRadius * 0.42;
+    // Derive circle geometry
+    final circleRadius = outerRadius * 0.33;
 
     final topCircleCenter = Offset(
       center.dx,
-      top.dy + circleRadius,
+      center.dy - outerRadius * 0.48,
     );
 
     final leftCircleCenter = Offset(
-      left.dx + circleRadius * 0.9,
-      left.dy - circleRadius * 0.5,
+      center.dx - outerRadius * 0.36,
+      center.dy + outerRadius * 0.18,
     );
 
     final rightCircleCenter = Offset(
-      right.dx - circleRadius * 0.9,
-      right.dy - circleRadius * 0.5,
+      center.dx + outerRadius * 0.36,
+      center.dy + outerRadius * 0.18,
     );
 
-    // 5. Draw inverted triangle
-    // The top vertices are derived from the side boundary slope of the main triangle
-    // at the height of topCircleCenter.dy.
+    // Derive inverted triangle
     final invertedTriangleTopY = topCircleCenter.dy;
     final invertedTriangleTopXDist = (invertedTriangleTopY - top.dy) / sqrt(3);
 
@@ -70,26 +57,34 @@ class SacredGeometryPainter extends CustomPainter {
     final invertedTopR = Offset(center.dx + invertedTriangleTopXDist, invertedTriangleTopY);
     final invertedBottom = Offset(center.dx, center.dy + outerRadius);
 
+    // Build paths
+    final mainTrianglePath = Path()
+      ..moveTo(top.dx, top.dy)
+      ..lineTo(left.dx, left.dy)
+      ..lineTo(right.dx, right.dy)
+      ..close();
+
     final invertedTrianglePath = Path()
       ..moveTo(invertedTopL.dx, invertedTopL.dy)
       ..lineTo(invertedTopR.dx, invertedTopR.dy)
       ..lineTo(invertedBottom.dx, invertedBottom.dy)
       ..close();
+
+    // === DRAW ORDER ===
+
+    // 1. Outer circle
+    canvas.drawCircle(center, outerRadius, strokePaint);
+
+    // 2. Three inner circles (full)
+    canvas.drawCircle(topCircleCenter, circleRadius, strokePaint);
+    canvas.drawCircle(leftCircleCenter, circleRadius, strokePaint);
+    canvas.drawCircle(rightCircleCenter, circleRadius, strokePaint);
+
+    // 3. Main triangle
+    canvas.drawPath(mainTrianglePath, strokePaint);
+
+    // 4. Inverted triangle
     canvas.drawPath(invertedTrianglePath, strokePaint);
-
-    // 6. Draw inner arcs (partial — hides backside overlaps for clean geometry)
-
-    // Top arc — visible lower portion
-    final topRect = Rect.fromCircle(center: topCircleCenter, radius: circleRadius);
-    canvas.drawArc(topRect, pi * 0.95, pi * 1.1, false, strokePaint);
-
-    // Left arc — visible arc facing inward/right
-    final leftRect = Rect.fromCircle(center: leftCircleCenter, radius: circleRadius);
-    canvas.drawArc(leftRect, -pi * 0.15, pi * 1.3, false, strokePaint);
-
-    // Right arc — visible arc facing inward/left
-    final rightRect = Rect.fromCircle(center: rightCircleCenter, radius: circleRadius);
-    canvas.drawArc(rightRect, -pi * 0.85, pi * 1.3, false, strokePaint);
   }
 
   @override
