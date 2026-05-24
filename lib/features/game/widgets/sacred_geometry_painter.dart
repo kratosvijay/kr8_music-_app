@@ -16,7 +16,7 @@ class SacredGeometryPainter extends CustomPainter {
     canvas.drawCircle(center, outerRadius, strokePaint);
 
     // 2. Derive main triangle geometry
-    final side = outerRadius * 1.73;
+    final side = outerRadius * 1.52;
     final triangleHeight = sqrt(3) / 2 * side;
 
     final top = Offset(
@@ -43,7 +43,7 @@ class SacredGeometryPainter extends CustomPainter {
     canvas.drawPath(mainTrianglePath, strokePaint);
 
     // 4. Derive circle geometry
-    final circleRadius = side * 0.32;
+    final circleRadius = outerRadius * 0.42;
 
     final topCircleCenter = Offset(
       center.dx,
@@ -79,17 +79,17 @@ class SacredGeometryPainter extends CustomPainter {
 
     // 6. Draw inner arcs (partial — hides backside overlaps for clean geometry)
 
-    // Top circle — only lower visible portion
+    // Top arc — visible lower portion
     final topRect = Rect.fromCircle(center: topCircleCenter, radius: circleRadius);
-    canvas.drawArc(topRect, pi * 0.1, pi * 0.8, false, strokePaint);
+    canvas.drawArc(topRect, pi * 0.95, pi * 1.1, false, strokePaint);
 
-    // Left circle — visible arc facing inward/right
+    // Left arc — visible arc facing inward/right
     final leftRect = Rect.fromCircle(center: leftCircleCenter, radius: circleRadius);
-    canvas.drawArc(leftRect, pi * 0.75, pi * 1.5, false, strokePaint);
+    canvas.drawArc(leftRect, -pi * 0.15, pi * 1.3, false, strokePaint);
 
-    // Right circle — visible arc facing inward/left
+    // Right arc — visible arc facing inward/left
     final rightRect = Rect.fromCircle(center: rightCircleCenter, radius: circleRadius);
-    canvas.drawArc(rightRect, -pi * 0.25, pi * 1.5, false, strokePaint);
+    canvas.drawArc(rightRect, -pi * 0.85, pi * 1.3, false, strokePaint);
   }
 
   @override
